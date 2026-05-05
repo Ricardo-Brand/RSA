@@ -56,7 +56,7 @@ long long extended_gcd(long long a, long long b, long long *x, long long *y) {
 
 // Criptografa um caractere usando a chave pública (n, e)
 ull encrypt_char(char c, ull n, ull e) {
-    ull m = (ull)c;
+    ull m = (ull)(unsigned char)c;
     return mod_exp(m, e, n);
 }
 
@@ -89,7 +89,7 @@ int main() {
     }
 
     // Remove a quebra de linha do final
-    tamanho_texto = texto_size;
+    tamanho_texto = status;
     if (tamanho_texto > 0 && texto[tamanho_texto - 1] == '\n') {
         texto[tamanho_texto - 1] = '\0';
         tamanho_texto--;
@@ -97,9 +97,9 @@ int main() {
 
     // Criptografa cada caractere
     printf("\nTEXTO CRIPTOGRAFADO:\n");
-    for (int i = 0; i < tamanho_texto; i++) {
+    for (int i = 0; i < (int)tamanho_texto; i++) {
         ull criptografado = encrypt_char(texto[i], n, e);
-        printf("%llu ", criptografado);
+        printf("%llu", criptografado);
     }
     printf("\n\n");
 

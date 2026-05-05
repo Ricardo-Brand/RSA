@@ -5,6 +5,14 @@
 
 typedef unsigned long long ull;
 
+unsigned long long secure_rand_ull() {
+    unsigned long long val;
+    if (RAND_bytes((unsigned char*)&val, sizeof(val)) != 1) {
+        fprintf(stderr, "Erro no RNG\n");
+        exit(1);
+    }
+    return val;
+}
 ull mul_mod(ull a, ull b, ull mod) {
     ull result = 0;
     a %= mod;
@@ -127,22 +135,13 @@ ull generate_d(ull z) {
     return d;
 }
 
-unsigned long long secure_rand_ull() {
-    unsigned long long val;
-    if (RAND_bytes((unsigned char*)&val, sizeof(val)) != 1) {
-        fprintf(stderr, "Erro no RNG\n");
-        exit(1);
-    }
-    return val;
-}
-
 int main() {
     unsigned long long int p, q, n, z, d, e;
     int min, max;
     int op;
 
-    min = 2;
-    max = 10;
+    min = 17;
+    max = 1000;
 
     do{
         p = q = n = z = d = e = 0;
@@ -162,6 +161,11 @@ int main() {
 
                 if (!is_prime(p) || !is_prime(q) || p == q) {
                     printf("Entrada inválida\n");
+                    continue;
+                }
+
+                if (p < (ull)min || p > (ull)max || q < (ull)min || q > (ull)max) {
+                    printf("p e q devem estar entre %d e %d\n", min, max);
                     continue;
                 }
 
@@ -186,7 +190,7 @@ int main() {
         d = generate_d(z);
         e = mod_inverse(d, z);
 
-        if (e == -1) {
+        if ((int)e == -1) {
             printf("Erro: sem inverso modular\n");
             continue;
         }
