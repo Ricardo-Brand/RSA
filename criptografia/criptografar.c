@@ -1,8 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include "read_ull.h"
 
 typedef unsigned long long ull;
+
+
+int parse_ull(const char *str, ull *out) {
+    char *endptr;
+    errno = 0;
+    unsigned long long value = strtoull(str, &endptr, 10);
+    if (errno == ERANGE) return 0;
+    if (endptr == str) return 0; // sem dígitos
+    while (*endptr == ' ' || *endptr == '\t') endptr++;
+    if (*endptr != '\n' && *endptr != '\0') return 0;
+    *out = (ull)value;
+    return 1;
+}
+
+int read_ull(const char *prompt, ull *out) {
+    char buffer[128];
+    printf("%s", prompt);
+    if (!fgets(buffer, sizeof(buffer), stdin)) return 0;
+    return parse_ull(buffer, out);
+}
 
 // ============= FUNÇÕES MATEMÁTICAS =============
 
@@ -78,14 +100,12 @@ int main() {
 
     printf("\n========== CRIPTOGRAFIA RSA ==========\n\n");
 
-    printf("Informe a chave pública N: ");
-    if (scanf("%llu", &n) != 1) {
+    if (!read_ull("Informe a chave pública N: ", &n)) {
         fprintf(stderr, "Erro: entrada inválida para N. Digite apenas números.\n");
         return 1;
     }
 
-    printf("Informe a chave pública E: ");
-    if (scanf("%llu", &e) != 1) {
+    if (!read_ull("Informe a chave pública E: ", &e)) {
         fprintf(stderr, "Erro: entrada inválida para E. Digite apenas números.\n");
         return 1;
     }
@@ -100,8 +120,6 @@ int main() {
         fprintf(stderr, "Erro: E deve estar entre 2 e N-1\n");
         return 1;
     }
-
-    getchar(); // Limpar o buffer
 
     printf("Informe o texto a criptografar: ");
     ssize_t status = getline(&texto, &texto_size, stdin);
@@ -124,7 +142,7 @@ int main() {
     }
 
     // Criptografa cada caractere
-    printf("\nTEXTO CRIPTOGRAFADO:\n\n");
+    printf("\nTEXTO CRIPTOGRAFADO:\n");
     ull max_value = (n > 0 ? n - 1 : 0);
     int width = count_digits(max_value);
     for (int i = 0; i < (int)tamanho_texto; i++) {

@@ -8,7 +8,7 @@ typedef unsigned long long ull;
 unsigned long long secure_rand_ull() {
     unsigned long long val;
     if (RAND_bytes((unsigned char*)&val, sizeof(val)) != 1) {
-        fprintf(stderr, "Erro no RNG\n");
+        fprintf(stderr, "Erro em RAND_bytes\n");
         exit(1);
     }
     return val;

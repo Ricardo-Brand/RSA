@@ -2,8 +2,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 typedef unsigned long long ull;
+
+int parse_ull(const char *str, ull *out) {
+    char *endptr;
+    errno = 0;
+    unsigned long long value = strtoull(str, &endptr, 10);
+    if (errno == ERANGE) return 0;
+    if (endptr == str) return 0;
+    while (*endptr == ' ' || *endptr == '\t') endptr++;
+    if (*endptr != '\n' && *endptr != '\0') return 0;
+    *out = (ull)value;
+    return 1;
+}
+
+int read_ull(const char *prompt, ull *out) {
+    char buffer[128];
+    printf("%s", prompt);
+    if (!fgets(buffer, sizeof(buffer), stdin)) return 0;
+    return parse_ull(buffer, out);
+}
 
 // ============= FUNÇÕES MATEMÁTICAS =============
 
@@ -38,9 +58,9 @@ ull mod_exp(ull base, ull exp, ull mod) {
 }
 
 // Descriptografa um bloco usando a chave privada (n, d)
-ull decrypt_char(ull c, ull n, ull d) {
+unsigned char decrypt_char(ull c, ull n, ull d) {
     ull m = mod_exp(c, d, n);
-    return (char)(m & 0xFF);
+    return (unsigned char)(m & 0xFF);
 }
 
 int count_digits(ull value) {
@@ -60,14 +80,12 @@ int main() {
 
     printf("\n========== DESCRIPTOGRAFIA RSA ==========\n\n");
 
-    printf("Informe a chave privada N: ");
-    if (scanf("%llu", &n) != 1) {
+    if (!read_ull("Informe a chave privada N: ", &n)) {
         fprintf(stderr, "Erro: entrada inválida para N. Digite apenas números.\n");
         return 1;
     }
 
-    printf("Informe a chave privada D: ");
-    if (scanf("%llu", &d) != 1) {
+    if (!read_ull("Informe a chave privada D: ", &d)) {
         fprintf(stderr, "Erro: entrada inválida para D. Digite apenas números.\n");
         return 1;
     }
@@ -81,8 +99,6 @@ int main() {
         fprintf(stderr, "Erro: D deve estar entre 2 e N-1\n");
         return 1;
     }
-
-    getchar(); // Limpar o buffer
 
     printf("Informe o texto criptografado: ");
     status = getline(&ciphertext, &bufsize, stdin);
@@ -138,7 +154,16 @@ int main() {
             }
         }
 
-        ull value = strtoull(block, NULL, 10);
+        char *endptr;
+        errno = 0;
+        unsigned long long parsed = strtoull(block, &endptr, 10);
+        if (errno == ERANGE || endptr != block + width) {
+            fprintf(stderr, "Erro: bloco criptografado inválido\n");
+            free(ciphertext);
+            return 1;
+        }
+
+        ull value = (ull)parsed;
         if (value >= n) {
             fprintf(stderr, "Erro: bloco criptografado inválido (maior que N-1)\n");
             free(ciphertext);
