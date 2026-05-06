@@ -2,8 +2,47 @@
 #include <stdlib.h>
 #include <time.h>
 #include <openssl/rand.h>
+#include <errno.h>
 
 typedef unsigned long long ull;
+
+int parse_ull(const char *str, ull *out) {
+    char *endptr;
+    errno = 0;
+    unsigned long long value = strtoull(str, &endptr, 10);
+    if (errno == ERANGE) return 0;
+    if (endptr == str) return 0;
+    while (*endptr == ' ' || *endptr == '\t') endptr++;
+    if (*endptr != '\n' && *endptr != '\0') return 0;
+    *out = (ull)value;
+    return 1;
+}
+
+int read_ull(const char *prompt, ull *out) {
+    char buffer[128];
+    printf("%s", prompt);
+    if (!fgets(buffer, sizeof(buffer), stdin)) return 0;
+    return parse_ull(buffer, out);
+}
+
+int parse_int(const char *str, int *out) {
+    char *endptr;
+    errno = 0;
+    long value = strtol(str, &endptr, 10);
+    if (errno == ERANGE) return 0;
+    if (endptr == str) return 0;
+    while (*endptr == ' ' || *endptr == '\t') endptr++;
+    if (*endptr != '\n' && *endptr != '\0') return 0;
+    *out = (int)value;
+    return 1;
+}
+
+int read_int(const char *prompt, int *out) {
+    char buffer[128];
+    printf("%s", prompt);
+    if (!fgets(buffer, sizeof(buffer), stdin)) return 0;
+    return parse_int(buffer, out);
+}
 
 unsigned long long secure_rand_ull() {
     unsigned long long val;
@@ -136,12 +175,11 @@ ull generate_d(ull z) {
 }
 
 int main() {
-    unsigned long long int p, q, n, z, d, e;
-    int min, max;
+    unsigned long long int p, q, n, z, d, e, min, max;
     int op;
 
     min = 17;
-    max = 1000;
+    max = (1ULL << 48) - 1; // limite superior para p e q (48 bits) para garantir que n caiba em 64 bits
 
     do{
         p = q = n = z = d = e = 0;
@@ -150,28 +188,21 @@ int main() {
         printf("1 - Informar p e q (números primos)\n");
         printf("2 - Sistema gera p e q aleatórios\n");
         printf("0 - Sair\n");
-        printf("Escolha uma opção: ");
 
-        if (scanf("%d", &op) != 1) {
-            printf("Entrada inválida. Digite apenas números.\n");
-            // Limpar buffer de entrada
-            while (getchar() != '\n');
+        if (!read_int("Escolha uma opção: ", &op)) {
+            printf("Entrada inválida. Escolha uma das opções descritas.\n");
             continue;
         }
 
         switch (op) {
             case 1:
-                printf("Informe o valor de p: ");
-                if (scanf("%llu", &p) != 1) {
-                    printf("Entrada inválida. Digite apenas números.\n");
-                    while (getchar() != '\n');
+                if (!read_ull("Informe o valor de p: ", &p)) {
+                    printf("Entrada inválida. Digite apenas números inteiros.\n");
                     continue;
                 }
 
-                printf("Informe o valor de q: ");
-                if (scanf("%llu", &q) != 1) {
-                    printf("Entrada inválida. Digite apenas números.\n");
-                    while (getchar() != '\n');
+                if (!read_ull("Informe o valor de q: ", &q)) {
+                    printf("Entrada inválida. Digite apenas números inteiros.\n");
                     continue;
                 }
 
@@ -181,7 +212,7 @@ int main() {
                 }
 
                 if (p < (ull)min || p > (ull)max || q < (ull)min || q > (ull)max) {
-                    printf("p e q devem estar entre %d e %d\n", min, max);
+                    printf("p e q devem estar entre %llu e %llu\n", min, max);
                     continue;
                 }
 
