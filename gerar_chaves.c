@@ -150,17 +150,33 @@ int main() {
         printf("1 - Informar p e q (números primos)\n");
         printf("2 - Sistema gera p e q aleatórios\n");
         printf("0 - Sair\n");
-        scanf("%d", &op);
+        printf("Escolha uma opção: ");
+
+        if (scanf("%d", &op) != 1) {
+            printf("Entrada inválida. Digite apenas números.\n");
+            // Limpar buffer de entrada
+            while (getchar() != '\n');
+            continue;
+        }
 
         switch (op) {
             case 1:
                 printf("Informe o valor de p: ");
-                scanf("%llu", &p);
+                if (scanf("%llu", &p) != 1) {
+                    printf("Entrada inválida. Digite apenas números.\n");
+                    while (getchar() != '\n');
+                    continue;
+                }
+
                 printf("Informe o valor de q: ");
-                scanf("%llu", &q);
+                if (scanf("%llu", &q) != 1) {
+                    printf("Entrada inválida. Digite apenas números.\n");
+                    while (getchar() != '\n');
+                    continue;
+                }
 
                 if (!is_prime(p) || !is_prime(q) || p == q) {
-                    printf("Entrada inválida\n");
+                    printf("Entrada inválida: p e q devem ser números primos distintos\n");
                     continue;
                 }
 

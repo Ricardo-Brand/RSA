@@ -10,11 +10,15 @@ build:
 	@mkdir -p build
 
 # Compila o gerador de chaves
-gerar-chaves: gerar_chaves.c
+gerar-chaves: build gerar_chaves.c
 	@$(CC) $(CFLAGS) $(LDFLAGS) gerar_chaves.c -o build/gerar_chaves
 
-criptografar: ./criptografia/main.c
+criptografar: build ./criptografia/main.c
 	@$(CC) $(CFLAGS) $(LDFLAGS) ./criptografia/main.c -o build/criptografar
+
+chaves: all-chaves
+
+cripto: criptografar
 
 # Executa o gerador de chaves
 exec-gerar-chaves: gerar-chaves
@@ -27,8 +31,4 @@ exec-cripto: criptografar
 clean:
 	@rm -rf build
 
-chaves: all-chaves
-
-cripto: all-cripto
-
-.PHONY: all-chaves all-cripto build clean gerar-chaves cripto exec-gerar-chaves exec-cripto
+.PHONY: all-chaves all-cripto build clean gerar-chaves criptografar cripto exec-gerar-chaves exec-cripto

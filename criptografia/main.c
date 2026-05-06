@@ -79,9 +79,28 @@ int main() {
     printf("\n========== CRIPTOGRAFIA RSA ==========\n\n");
 
     printf("Informe a chave pública N: ");
-    scanf("%llu", &n);
+    if (scanf("%llu", &n) != 1) {
+        fprintf(stderr, "Erro: entrada inválida para N. Digite apenas números.\n");
+        return 1;
+    }
+
     printf("Informe a chave pública E: ");
-    scanf("%llu", &e);
+    if (scanf("%llu", &e) != 1) {
+        fprintf(stderr, "Erro: entrada inválida para E. Digite apenas números.\n");
+        return 1;
+    }
+
+    // Validações básicas das chaves
+    if (n < 2) {
+        fprintf(stderr, "Erro: N deve ser maior que 1\n");
+        return 1;
+    }
+
+    if (e < 2 || e >= n) {
+        fprintf(stderr, "Erro: E deve estar entre 2 e N-1\n");
+        return 1;
+    }
+
     getchar(); // Limpar o buffer
 
     printf("Informe o texto a criptografar: ");
