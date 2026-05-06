@@ -60,6 +60,15 @@ ull encrypt_char(char c, ull n, ull e) {
     return mod_exp(m, e, n);
 }
 
+int count_digits(ull value) {
+    int digits = 1;
+    while (value >= 10) {
+        value /= 10;
+        digits++;
+    }
+    return digits;
+}
+
 // ============= PROGRAMA PRINCIPAL =============
 
 int main() {
@@ -97,9 +106,11 @@ int main() {
 
     // Criptografa cada caractere
     printf("\nTEXTO CRIPTOGRAFADO:\n");
+    ull max_value = (n > 0 ? n - 1 : 0);
+    int width = count_digits(max_value);
     for (int i = 0; i < (int)tamanho_texto; i++) {
         ull criptografado = encrypt_char(texto[i], n, e);
-        printf("%llu", criptografado);
+        printf("%0*llu", width, criptografado);
     }
     printf("\n\n");
 

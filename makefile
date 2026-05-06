@@ -4,7 +4,7 @@ LDFLAGS = -L/opt/homebrew/opt/openssl@3/lib -lssl -lcrypto
 
 # Target principal
 all-chaves: build gerar-chaves exec-gerar-chaves	
-all-cripto: build cripto exec-cripto
+all-cripto: build criptografar exec-cripto
 
 build: 
 	@mkdir -p build
@@ -13,15 +13,14 @@ build:
 gerar-chaves: gerar_chaves.c
 	@$(CC) $(CFLAGS) $(LDFLAGS) gerar_chaves.c -o build/gerar_chaves
 
-cripto: ./criptografia/main.c
+criptografar: ./criptografia/main.c
 	@$(CC) $(CFLAGS) $(LDFLAGS) ./criptografia/main.c -o build/criptografar
-
 
 # Executa o gerador de chaves
 exec-gerar-chaves: gerar-chaves
 	@./build/gerar_chaves
 
-exec-cripto: cripto
+exec-cripto: criptografar
 	@./build/criptografar
 
 # Limpa os arquivos compilados
@@ -32,4 +31,4 @@ chaves: all-chaves
 
 cripto: all-cripto
 
-.PHONY: all clean rebuild gerar-chaves
+.PHONY: all-chaves all-cripto build clean gerar-chaves cripto exec-gerar-chaves exec-cripto

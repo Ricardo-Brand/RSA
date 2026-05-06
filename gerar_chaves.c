@@ -196,8 +196,8 @@ int main() {
         }
 
         printf("\nRESULTADOS:\n");
-        printf("\nPUBLIC KEY (e, n): (%llu, %llu)\n", e, n);
-        printf("PRIVATE KEY (d, n): (%llu, %llu)\n", d, n);
+        printf("\nPUBLIC KEY (n, e): (%llu, %llu)\n", n, e);
+        printf("PRIVATE KEY (n, d): (%llu, %llu)\n", n, d);
 
     } while(1);
 
