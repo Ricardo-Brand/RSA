@@ -11,11 +11,11 @@ build:
 	@mkdir -p build
 
 # Compila o gerador de chaves
-gerar-chaves: build gerar_chaves.c
-	@$(CC) $(CFLAGS) $(LDFLAGS) gerar_chaves.c -o build/gerar_chaves
+gerar-chaves: build chaves/gerar_chaves.c
+	@$(CC) $(CFLAGS) $(LDFLAGS) chaves/gerar_chaves.c -o build/gerar_chaves
 
-criptografar: build ./criptografia/criptografar.c
-	@$(CC) $(CFLAGS) $(LDFLAGS) ./criptografia/criptografar.c -o build/criptografar
+criptografar: build criptografia/criptografar.c
+	@$(CC) $(CFLAGS) $(LDFLAGS) criptografia/criptografar.c -o build/criptografar
 
 descriptografar: build descriptografia/descriptografar.c
 	@$(CC) $(CFLAGS) $(LDFLAGS) descriptografia/descriptografar.c -o build/descriptografar
