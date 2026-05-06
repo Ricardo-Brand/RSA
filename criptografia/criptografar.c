@@ -124,7 +124,7 @@ int main() {
     }
 
     // Criptografa cada caractere
-    printf("\nTEXTO CRIPTOGRAFADO:\n");
+    printf("\nTEXTO CRIPTOGRAFADO:\n\n");
     ull max_value = (n > 0 ? n - 1 : 0);
     int width = count_digits(max_value);
     for (int i = 0; i < (int)tamanho_texto; i++) {
