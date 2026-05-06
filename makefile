@@ -18,7 +18,7 @@ criptografar: build ./criptografia/main.c
 
 chaves: all-chaves
 
-cripto: criptografar
+cripto: all-cripto
 
 # Executa o gerador de chaves
 exec-gerar-chaves: gerar-chaves
