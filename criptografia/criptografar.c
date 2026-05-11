@@ -4,31 +4,70 @@
 #include <errno.h>
 
 typedef unsigned long long ull;
+typedef __uint128_t u128;
 
+int parse_u128(const char *str, u128 *out) {
+    u128 result = 0;
 
-int parse_ull(const char *str, ull *out) {
-    char *endptr;
-    errno = 0;
-    unsigned long long value = strtoull(str, &endptr, 10);
-    if (errno == ERANGE) return 0;
-    if (endptr == str) return 0; // sem dígitos
-    while (*endptr == ' ' || *endptr == '\t') endptr++;
-    if (*endptr != '\n' && *endptr != '\0') return 0;
-    *out = (ull)value;
+    while (*str == ' ' || *str == '\t')
+        str++;
+
+    if (*str == '\0' || *str == '\n')
+        return 0;
+
+    while (*str >= '0' && *str <= '9') {
+        result = result * 10 + (*str - '0');
+        str++;
+    }
+
+    while (*str == ' ' || *str == '\t')
+        str++;
+
+    if (*str != '\0' && *str != '\n')
+        return 0;
+
+    *out = result;
     return 1;
 }
 
-int read_ull(const char *prompt, ull *out) {
-    char buffer[128];
+int read_u128(const char *prompt, u128 *out) {
+    char buffer[256];
+
     printf("%s", prompt);
-    if (!fgets(buffer, sizeof(buffer), stdin)) return 0;
-    return parse_ull(buffer, out);
+
+    if (!fgets(buffer, sizeof(buffer), stdin))
+        return 0;
+
+    return parse_u128(buffer, out);
+}
+
+void print_padded_u128(u128 value, int width) {
+    char buffer[64];
+    int i = 0;
+
+    if (value == 0) {
+        buffer[i++] = '0';
+    } else {
+        while (value > 0) {
+            buffer[i++] = '0' + (int)(value % 10);
+            value /= 10;
+        }
+    }
+
+    int padding = width - i;
+
+    while (padding-- > 0)
+        putchar('0');
+
+    while (i--)
+        putchar(buffer[i]);
 }
 
 // ============= FUNÇÕES MATEMÁTICAS =============
 
-ull mul_mod(ull a, ull b, ull mod) {
-    ull result = 0;
+u128 mul_mod(u128 a, u128 b, u128 mod) {
+    u128 result = 0;
+
     a %= mod;
 
     while (b > 0) {
@@ -42,8 +81,8 @@ ull mul_mod(ull a, ull b, ull mod) {
     return result;
 }
 
-ull mod_exp(ull base, ull exp, ull mod) {
-    ull result = 1;
+u128 mod_exp(u128 base, u128 exp, u128 mod) {
+    u128 result = 1;
     base %= mod;
 
     while (exp > 0) {
@@ -76,35 +115,37 @@ long long extended_gcd(long long a, long long b, long long *x, long long *y) {
 // ============= CRIPTOGRAFIA RSA =============
 
 // Criptografa um caractere usando a chave pública (n, e)
-ull encrypt_char(char c, ull n, ull e) {
-    ull m = (ull)(unsigned char)c;
+u128 encrypt_char(char c, u128 n, u128 e) {
+    u128 m = (u128)(unsigned char)c;
     return mod_exp(m, e, n);
 }
 
-int count_digits(ull value) {
+int count_digits_u128(u128 value) {
     int digits = 1;
+
     while (value >= 10) {
         value /= 10;
         digits++;
     }
+
     return digits;
 }
 
 // ============= PROGRAMA PRINCIPAL =============
 
 int main() {
-    ull n, e;
+    u128 n, e;
     char *texto = NULL;
     size_t texto_size = 0, tamanho_texto = 0;
 
     printf("\n========== CRIPTOGRAFIA RSA ==========\n\n");
 
-    if (!read_ull("Informe a chave pública N: ", &n)) {
+    if (!read_u128("Informe a chave pública N: ", &n)) {
         fprintf(stderr, "Erro: entrada inválida para N. Digite apenas números.\n");
         return 1;
     }
 
-    if (!read_ull("Informe a chave pública E: ", &e)) {
+    if (!read_u128("Informe a chave pública E: ", &e)) {
         fprintf(stderr, "Erro: entrada inválida para E. Digite apenas números.\n");
         return 1;
     }
@@ -142,11 +183,12 @@ int main() {
 
     // Criptografa cada caractere
     printf("\nTEXTO CRIPTOGRAFADO:\n");
-    ull max_value = (n > 0 ? n - 1 : 0);
-    int width = count_digits(max_value);
+    u128 max_value = (n > 0 ? n - 1 : 0);
+    int width = count_digits_u128(max_value);
+
     for (int i = 0; i < (int)tamanho_texto; i++) {
-        ull criptografado = encrypt_char(texto[i], n, e);
-        printf("%0*llu", width, criptografado);
+        u128 criptografado = encrypt_char(texto[i], n, e);
+        print_padded_u128(criptografado, width);
     }
     printf("\n\n");
 

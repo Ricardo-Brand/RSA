@@ -5,30 +5,47 @@
 #include <errno.h>
 
 typedef unsigned long long ull;
+typedef __uint128_t u128;
 
-int parse_ull(const char *str, ull *out) {
-    char *endptr;
-    errno = 0;
-    unsigned long long value = strtoull(str, &endptr, 10);
-    if (errno == ERANGE) return 0;
-    if (endptr == str) return 0;
-    while (*endptr == ' ' || *endptr == '\t') endptr++;
-    if (*endptr != '\n' && *endptr != '\0') return 0;
-    *out = (ull)value;
+int parse_u128(const char *str, u128 *out) {
+    u128 result = 0;
+
+    while (*str == ' ' || *str == '\t')
+        str++;
+
+    if (*str == '\0' || *str == '\n')
+        return 0;
+
+    while (*str >= '0' && *str <= '9') {
+        result = result * 10 + (*str - '0');
+        str++;
+    }
+
+    while (*str == ' ' || *str == '\t')
+        str++;
+
+    if (*str != '\0' && *str != '\n')
+        return 0;
+
+    *out = result;
     return 1;
 }
 
-int read_ull(const char *prompt, ull *out) {
-    char buffer[128];
-    printf("%s", prompt);
-    if (!fgets(buffer, sizeof(buffer), stdin)) return 0;
-    return parse_ull(buffer, out);
-}
+int read_u128(const char *prompt, u128 *out) {
+    char buffer[256];
 
+    printf("%s", prompt);
+
+    if (!fgets(buffer, sizeof(buffer), stdin))
+        return 0;
+
+    return parse_u128(buffer, out);
+}
 // ============= FUNÇÕES MATEMÁTICAS =============
 
-ull mul_mod(ull a, ull b, ull mod) {
-    ull result = 0;
+u128 mul_mod(u128 a, u128 b, u128 mod) {
+    u128 result = 0;
+
     a %= mod;
 
     while (b > 0) {
@@ -42,8 +59,8 @@ ull mul_mod(ull a, ull b, ull mod) {
     return result;
 }
 
-ull mod_exp(ull base, ull exp, ull mod) {
-    ull result = 1;
+u128 mod_exp(u128 base, u128 exp, u128 mod) {
+    u128 result = 1;
     base %= mod;
 
     while (exp > 0) {
@@ -58,34 +75,36 @@ ull mod_exp(ull base, ull exp, ull mod) {
 }
 
 // Descriptografa um bloco usando a chave privada (n, d)
-unsigned char decrypt_char(ull c, ull n, ull d) {
-    ull m = mod_exp(c, d, n);
+unsigned char decrypt_char(u128 c, u128 n, u128 d) {
+    u128 m = mod_exp(c, d, n);
     return (unsigned char)(m & 0xFF);
 }
 
-int count_digits(ull value) {
+int count_digits_u128(u128 value) {
     int digits = 1;
+
     while (value >= 10) {
         value /= 10;
         digits++;
     }
+
     return digits;
 }
 
 int main() {
-    ull n, d;
+    u128 n, d;
     char *ciphertext = NULL;
     size_t bufsize = 0;
     ssize_t status;
 
     printf("\n========== DESCRIPTOGRAFIA RSA ==========\n\n");
 
-    if (!read_ull("Informe a chave privada N: ", &n)) {
+    if (!read_u128("Informe a chave privada N: ", &n)) {
         fprintf(stderr, "Erro: entrada inválida para N. Digite apenas números.\n");
         return 1;
     }
 
-    if (!read_ull("Informe a chave privada D: ", &d)) {
+    if (!read_u128("Informe a chave privada D: ", &d)) {
         fprintf(stderr, "Erro: entrada inválida para D. Digite apenas números.\n");
         return 1;
     }
@@ -120,8 +139,8 @@ int main() {
         length--;
     }
 
-    ull max_value = (n > 0 ? n - 1 : 0);
-    int width = count_digits(max_value);
+    u128 max_value = (n > 0 ? n - 1 : 0);
+    int width = count_digits_u128(max_value);
     if (width <= 0) {
         fprintf(stderr, "Erro interno: largura de bloco inválida\n");
         free(ciphertext);
@@ -136,7 +155,7 @@ int main() {
 
     printf("\nTEXTO DESCRIPTOGRAFADO:\n\n");
     for (size_t pos = 0; pos < length; pos += width) {
-        char block[32];
+        char block[128];
         if (width >= (int)sizeof(block)) {
             fprintf(stderr, "Erro interno: bloco muito grande\n");
             free(ciphertext);
@@ -154,23 +173,21 @@ int main() {
             }
         }
 
-        char *endptr;
-        errno = 0;
-        unsigned long long parsed = strtoull(block, &endptr, 10);
-        if (errno == ERANGE || endptr != block + width) {
+        u128 value;
+
+        if (!parse_u128(block, &value)) {
             fprintf(stderr, "Erro: bloco criptografado inválido\n");
             free(ciphertext);
             return 1;
         }
 
-        ull value = (ull)parsed;
         if (value >= n) {
             fprintf(stderr, "Erro: bloco criptografado inválido (maior que N-1)\n");
             free(ciphertext);
             return 1;
         }
 
-        char plain = decrypt_char(value, n, d);
+        unsigned char plain = decrypt_char(value, n, d);
         putchar(plain);
     }
 

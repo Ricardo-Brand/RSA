@@ -5,6 +5,8 @@
 #include <errno.h>
 
 typedef unsigned long long ull;
+typedef __uint128_t u128;
+typedef __int128_t i128;
 
 int parse_ull(const char *str, ull *out) {
     char *endptr;
@@ -52,19 +54,9 @@ unsigned long long secure_rand_ull() {
     }
     return val;
 }
+
 ull mul_mod(ull a, ull b, ull mod) {
-    ull result = 0;
-    a %= mod;
-
-    while (b > 0) {
-        if (b & 1)
-            result = (result + a) % mod;
-
-        a = (a << 1) % mod;
-        b >>= 1;
-    }
-
-    return result;
+    return ((u128)a * b) % mod;
 }
 
 ull mod_exp(ull base, ull exp, ull mod) {
@@ -84,8 +76,20 @@ ull mod_exp(ull base, ull exp, ull mod) {
 
 int is_prime(ull n) {
     if (n < 2) return 0;
-    if (n == 2) return 1;
-    if (n % 2 == 0) return 0;
+
+    ull small_primes[] = {
+        2ULL, 3ULL, 5ULL, 7ULL, 11ULL,
+        13ULL, 17ULL, 19ULL, 23ULL,
+        29ULL, 31ULL, 37ULL
+    };
+
+    for (int i = 0; i < 12; i++) {
+        if (n == small_primes[i])
+            return 1;
+
+        if (n % small_primes[i] == 0)
+            return 0;
+    }
 
     ull d = n - 1;
     int s = 0;
@@ -95,39 +99,54 @@ int is_prime(ull n) {
         s++;
     }
 
-    for (int i = 0; i < 5; i++) {
-        ull a = 2 + (secure_rand_ull() % (n - 3));
+    ull test_bases[] = {
+        2ULL,
+        3ULL,
+        5ULL,
+        7ULL,
+        11ULL,
+        13ULL,
+        23ULL
+    };
+
+    for (int i = 0; i < 7; i++) {
+        ull a = test_bases[i] % n;
+
+        if (a == 0)
+            continue;
+
         ull x = mod_exp(a, d, n);
 
         if (x == 1 || x == n - 1)
             continue;
 
-        int ok = 0;
+        int composite = 1;
 
-        for (int r = 0; r < s - 1; r++) {
+        for (int r = 1; r < s; r++) {
             x = mul_mod(x, x, n);
 
             if (x == n - 1) {
-                ok = 1;
+                composite = 0;
                 break;
             }
         }
 
-        if (!ok) return 0;
+        if (composite)
+            return 0;
     }
 
     return 1;
 }
 
-long long extended_gcd(long long a, long long b, long long *x, long long *y) {
+i128 extended_gcd(i128 a, i128 b, i128 *x, i128 *y) {
     if (b == 0) {
         *x = 1;
         *y = 0;
         return a;
     }
 
-    long long x1, y1;
-    long long g = extended_gcd(b, a % b, &x1, &y1);
+    i128 x1, y1;
+    i128 g = extended_gcd(b, a % b, &x1, &y1);
 
     *x = y1;
     *y = x1 - (a / b) * y1;
@@ -135,9 +154,9 @@ long long extended_gcd(long long a, long long b, long long *x, long long *y) {
     return g;
 }
 
-long long mod_inverse(long long d, long long z) {
-    long long x, y;
-    long long g = extended_gcd(d, z, &x, &y);
+i128 mod_inverse(i128 d, i128 z) {
+    i128 x, y;
+    i128 g = extended_gcd(d, z, &x, &y);
 
     if (g != 1) return -1;
 
@@ -150,36 +169,58 @@ ull generate_prime(ull min, ull max) {
     do {
         r = secure_rand_ull();
         num = min + (r % (max - min));
+        num |= 1ULL; // Garante que seja ímpar
     } while (!is_prime(num));
 
     return num;
 }
 
-ull gcd(ull a, ull b) {
+u128 gcd(u128 a, u128 b) {
     while (b != 0) {
-        ull t = b;
+        u128 t = b;
         b = a % b;
         a = t;
     }
     return a;
 }
 
-ull generate_d(ull z) {
-    ull d;
+u128 generate_d(u128 z) {
+    u128 d;
 
     do {
-        d = 2 + (secure_rand_ull() % (z - 2));
+        d = 2 + (u128)secure_rand_ull() % (z - 2);
     } while (gcd(d, z) != 1);
 
     return d;
 }
 
+void print_u128(u128 value) {
+    if (value == 0) {
+        printf("0");
+        return;
+    }
+
+    char buffer[50];
+    int i = 0;
+
+    while (value > 0) {
+        buffer[i++] = '0' + (char)(value % 10);
+        value /= 10;
+    }
+
+    while (i--)
+        putchar(buffer[i]);
+}
+
 int main() {
-    unsigned long long int p, q, n, z, d, e, min, max;
+    ull p, q;
+    u128 n, z, d;
+    ull min, max;
+    i128 e;
     int op;
 
     min = 17;
-    max = (1ULL << 48) - 1; // limite superior para p e q (48 bits) para garantir que n caiba em 64 bits
+    max = (1ULL << 62) - 1; // limite superior para p e q (62 bits) para garantir que n caiba em 128 bits
 
     do{
         p = q = n = z = d = e = 0;
@@ -206,7 +247,10 @@ int main() {
                     continue;
                 }
 
-                if (!is_prime(p) || !is_prime(q) || p == q) {
+                if (!is_prime(p) || !is_prime(q)) {
+                    printf("Entrada inválida: p e q devem ser números primos\n");
+                    continue;
+                } else if (p == q) {
                     printf("Entrada inválida: p e q devem ser números primos distintos\n");
                     continue;
                 }
@@ -219,9 +263,12 @@ int main() {
                 break;
             case 2:
                 p = generate_prime(min, max);
+                ull q_temp, diff;
                 do {
-                    q = generate_prime(min, max);
-                } while (q == p); // Garante que p e q sejam diferentes
+                    q_temp = generate_prime(min, max);
+                    diff = (p > q_temp) ? (p - q_temp) : (q_temp - p);
+                } while (q_temp == p || diff < (1ULL << 30)); // Garante que p e q sejam diferentes e não próximos
+                q = q_temp;
                 
                 break;
             case 0:
@@ -232,19 +279,30 @@ int main() {
                 continue;
         }
 
-        n = p * q;
-        z = (p - 1) * (q - 1);
-        d = generate_d(z);
-        e = mod_inverse(d, z);
+        printf("p = %llu\n", p);
+        printf("q = %llu\n", q);
 
-        if ((int)e == -1) {
+        n = (u128)p * q;
+        z = (u128)(p - 1) * (q - 1);
+        d = generate_d(z);
+        e = mod_inverse((i128)d, (i128)z);
+
+        if (e == -1) {
             printf("Erro: sem inverso modular\n");
             continue;
         }
 
         printf("\nRESULTADOS:\n");
-        printf("\nPUBLIC KEY (n, e): (%llu, %llu)\n", n, e);
-        printf("PRIVATE KEY (n, d): (%llu, %llu)\n", n, d);
+        printf("\nPUBLIC KEY (n, e): ");
+        print_u128(n);
+        printf(", ");
+        print_u128((u128)e);
+        printf("\n");
+        printf("PRIVATE KEY (n, d): ");
+        print_u128(n);
+        printf(", ");
+        print_u128(d);
+        printf("\n");
 
     } while(1);
 
