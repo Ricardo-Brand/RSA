@@ -8,6 +8,8 @@ typedef unsigned long long ull;
 typedef __uint128_t u128;
 typedef __int128_t i128;
 
+// Converte uma string decimal para unsigned long long.
+// Retorna 1 se a conversão for bem-sucedida e 0 em caso de erro.
 int parse_ull(const char *str, ull *out) {
     char *endptr;
     errno = 0;
@@ -20,6 +22,7 @@ int parse_ull(const char *str, ull *out) {
     return 1;
 }
 
+// Lê um valor unsigned long long do usuário com prompt.
 int read_ull(const char *prompt, ull *out) {
     char buffer[128];
     printf("%s", prompt);
@@ -27,6 +30,8 @@ int read_ull(const char *prompt, ull *out) {
     return parse_ull(buffer, out);
 }
 
+// Converte uma string decimal para int.
+// Retorna 1 para sucesso e 0 para falha de entrada.
 int parse_int(const char *str, int *out) {
     char *endptr;
     errno = 0;
@@ -39,6 +44,7 @@ int parse_int(const char *str, int *out) {
     return 1;
 }
 
+// Lê um valor int do usuário com prompt.
 int read_int(const char *prompt, int *out) {
     char buffer[128];
     printf("%s", prompt);
@@ -46,6 +52,8 @@ int read_int(const char *prompt, int *out) {
     return parse_int(buffer, out);
 }
 
+// Retorna um número aleatório de 64 bits usando OpenSSL RAND_bytes.
+// Usado para gerar candidatos aos primos p e q e o expoente d.
 unsigned long long secure_rand_ull() {
     unsigned long long val;
     if (RAND_bytes((unsigned char*)&val, sizeof(val)) != 1) {
@@ -55,10 +63,12 @@ unsigned long long secure_rand_ull() {
     return val;
 }
 
+// Calcula (a * b) % mod usando u128 para evitar overflow.
 ull mul_mod(ull a, ull b, ull mod) {
     return ((u128)a * b) % mod;
 }
 
+// Calcula base^exp mod mod usando exponenciação modular rápida.
 ull mod_exp(ull base, ull exp, ull mod) {
     ull result = 1;
     base %= mod;
@@ -74,6 +84,8 @@ ull mod_exp(ull base, ull exp, ull mod) {
     return result;
 }
 
+// Teste de primalidade baseado em Miller-Rabin com testemunhos determinísticos
+// para números de até 64 bits. Retorna 1 para primo e 0 para composto.
 int is_prime(ull n) {
     if (n < 2) return 0;
 
@@ -138,6 +150,8 @@ int is_prime(ull n) {
     return 1;
 }
 
+// Calcula o máximo divisor comum estendido de a e b.
+// Retorna gcd(a, b) e calcula x, y tais que a*x + b*y = gcd(a, b).
 i128 extended_gcd(i128 a, i128 b, i128 *x, i128 *y) {
     if (b == 0) {
         *x = 1;
@@ -154,6 +168,8 @@ i128 extended_gcd(i128 a, i128 b, i128 *x, i128 *y) {
     return g;
 }
 
+// Calcula o inverso modular de d modulo z.
+// Retorna -1 se o inverso não existir.
 i128 mod_inverse(i128 d, i128 z) {
     i128 x, y;
     i128 g = extended_gcd(d, z, &x, &y);
@@ -163,6 +179,8 @@ i128 mod_inverse(i128 d, i128 z) {
     return (x % z + z) % z;
 }
 
+// Gera um número primo aleatório no intervalo [min, max].
+// Testa apenas candidatos ímpares com Miller-Rabin.
 ull generate_prime(ull min, ull max) {
     ull r, num;
 
@@ -175,6 +193,7 @@ ull generate_prime(ull min, ull max) {
     return num;
 }
 
+// Calcula o máximo divisor comum (gcd) de dois valores u128.
 u128 gcd(u128 a, u128 b) {
     while (b != 0) {
         u128 t = b;
@@ -184,6 +203,8 @@ u128 gcd(u128 a, u128 b) {
     return a;
 }
 
+// Gera um expoente privado d tal que gcd(d, z) == 1.
+// d é usado para calcular e como seu inverso modular.
 u128 generate_d(u128 z) {
     u128 d;
 
@@ -194,6 +215,7 @@ u128 generate_d(u128 z) {
     return d;
 }
 
+// Imprime um valor u128 em decimal.
 void print_u128(u128 value) {
     if (value == 0) {
         printf("0");

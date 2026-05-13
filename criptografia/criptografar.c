@@ -6,6 +6,7 @@
 typedef unsigned long long ull;
 typedef __uint128_t u128;
 
+// Converte uma string decimal para u128. Retorna 1 se for válido, 0 caso contrário.
 int parse_u128(const char *str, u128 *out) {
     u128 result = 0;
 
@@ -30,6 +31,7 @@ int parse_u128(const char *str, u128 *out) {
     return 1;
 }
 
+// Lê uma linha do usuário com prompt e converte para u128.
 int read_u128(const char *prompt, u128 *out) {
     char buffer[256];
 
@@ -41,6 +43,7 @@ int read_u128(const char *prompt, u128 *out) {
     return parse_u128(buffer, out);
 }
 
+// Imprime um valor u128 com zero à esquerda para manter todos os blocos com a mesma largura.
 void print_padded_u128(u128 value, int width) {
     char buffer[64];
     int i = 0;
@@ -65,6 +68,7 @@ void print_padded_u128(u128 value, int width) {
 
 // ============= FUNÇÕES MATEMÁTICAS =============
 
+// Realiza a multiplicação modular (a * b) % mod sem overflow direto de u128.
 u128 mul_mod(u128 a, u128 b, u128 mod) {
     u128 result = 0;
 
@@ -81,6 +85,8 @@ u128 mul_mod(u128 a, u128 b, u128 mod) {
     return result;
 }
 
+// Calcula base^exp mod mod usando exponenciação modular rápida.
+// Este método é usado para cifrar e decifrar no RSA.
 u128 mod_exp(u128 base, u128 exp, u128 mod) {
     u128 result = 1;
     base %= mod;
@@ -96,6 +102,8 @@ u128 mod_exp(u128 base, u128 exp, u128 mod) {
     return result;
 }
 
+// Calcula o máximo divisor comum estendido entre a e b.
+// Retorna g = gcd(a, b) e encontra os coeficientes x, y tais que ax + by = g.
 long long extended_gcd(long long a, long long b, long long *x, long long *y) {
     if (b == 0) {
         *x = 1;
@@ -114,12 +122,16 @@ long long extended_gcd(long long a, long long b, long long *x, long long *y) {
 
 // ============= CRIPTOGRAFIA RSA =============
 
-// Criptografa um caractere usando a chave pública (n, e)
+// Criptografa um único caractere usando a chave pública (n, e).
+// Converte o caractere para seu valor ASCII (0-255) e aplica a exponenciação modular.
+// Exemplo: 'A' (ASCII 65) → 65^e mod n
 u128 encrypt_char(char c, u128 n, u128 e) {
     u128 m = (u128)(unsigned char)c;
     return mod_exp(m, e, n);
 }
 
+// Retorna a quantidade de dígitos decimais de um valor u128.
+// Usado para padronizar o comprimento de cada bloco criptografado.
 int count_digits_u128(u128 value) {
     int digits = 1;
 
@@ -133,6 +145,9 @@ int count_digits_u128(u128 value) {
 
 // ============= PROGRAMA PRINCIPAL =============
 
+// Programa principal de criptografia RSA.
+// Lê a chave pública (n, e) e um texto do usuário, criptografa cada caractere
+// e imprime o resultado como blocos numéricos com largura fixa.
 int main() {
     u128 n, e;
     char *texto = NULL;
@@ -181,7 +196,9 @@ int main() {
         tamanho_texto--;
     }
 
-    // Criptografa cada caractere
+    // Criptografa cada caractere (letra, número ou símbolo) individualmente.
+    // Cada caractere é convertido para seu código ASCII e criptografado.
+    // Exemplo: 'h' (ASCII 104) → bloco criptografado de números
     printf("\nTEXTO CRIPTOGRAFADO:\n");
     u128 max_value = (n > 0 ? n - 1 : 0);
     int width = count_digits_u128(max_value);
