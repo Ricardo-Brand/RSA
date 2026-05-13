@@ -199,7 +199,7 @@ int main() {
     // Criptografa cada caractere (letra, número ou símbolo) individualmente.
     // Cada caractere é convertido para seu código ASCII e criptografado.
     // Exemplo: 'h' (ASCII 104) → bloco criptografado de números
-    printf("\nTEXTO CRIPTOGRAFADO:\n");
+    printf("\nTEXTO CRIPTOGRAFADO:\n\n");
     u128 max_value = (n > 0 ? n - 1 : 0);
     int width = count_digits_u128(max_value);
 
